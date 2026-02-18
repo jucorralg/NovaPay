@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NovaPay Secure Checkout</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #1f2937, #111827);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.checkout-card {
+    background: #ffffff;
+    width: 420px;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    overflow: hidden;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+.header {
+    background: #0f172a;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.logo {
+    width: 40px;
+    height: 40px;
+    background: #3b82f6;
+    border-radius: 8px;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.company-name {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.secure-text {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.content {
+    padding: 25px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+input:focus, select:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+}
+
+.row {
+    display: flex;
+    gap: 10px;
+}
+
+.pay-button {
+    width: 100%;
+    padding: 12px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.pay-button:hover {
+    background: #2563eb;
+}
+
+.pay-button:disabled {
+    background: #93c5fd;
+    cursor: not-allowed;
+}
+
+.spinner {
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top: 3px solid white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+
+.confirmation {
+    background: #f0fdf4;
+    border-top: 1px solid #bbf7d0;
+    padding: 20px;
+    display: none;
+}
+
+.confirmation h3 {
+    margin: 0 0 10px 0;
+    color: #166534;
+}
+
+.confirmation p {
+    font-size: 14px;
+    margin: 4px 0;
+}
+
+.footer {
+    text-align: center;
+    font-size: 11px;
+    padding: 12px;
+    background: #f9fafb;
+    color: #6b7280;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="checkout-card">
+
+    <div class="header">
+        <div class="logo"></div>
+        <div class="company-name">NovaPay</div>
+        <div class="secure-text">Secure Payment Gateway</div>
+    </div>
+
+    <div class="content">
+        <div class="form-group">
+            <label>Amount (€)</label>
+            <input type="number" id="amount" placeholder="Enter amount" min="1">
+        </div>
+
+        <div class="form-group">
+            <label>Card Type</label>
+            <select id="cardType">
+                <option>Visa</option>
+                <option>Mastercard</option>
+                <option>American Express</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Name on Card</label>
+            <input type="text" id="cardName" placeholder="John Doe">
+        </div>
+
+        <div class="form-group">
+            <label>Card Number</label>
+            <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+        </div>
+
+        <div class="row">
+            <div class="form-group">
+                <label>Expiry</label>
+                <input type="text" id="expiry" placeholder="MM/YY" maxlength="5">
+            </div>
+
+            <div class="form-group">
+                <label>CVV</label>
+                <input type="password" id="cvv" placeholder="123" maxlength="4">
+            </div>
+        </div>
+
+        <button class="pay-button" id="payButton" onclick="processPayment()">
+            Pay Now
+        </button>
+    </div>
+
+    <div class="confirmation" id="confirmationBox">
+        <h3>Payment Successful</h3>
+        <p id="confirmationDetails"></p>
+    </div>
+
+    <div class="footer">
+        © 2026 NovaPay Inc. All rights reserved.
+    </div>
+
+</div>
+
+<script>
+function generateConfirmationCode() {
+    return 'NP-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+}
+
+function processPayment() {
+
+    const amount = document.getElementById("amount").value;
+    const name = document.getElementById("cardName").value;
+    const number = document.getElementById("cardNumber").value;
+    const expiry = document.getElementById("expiry").value;
+    const cvv = document.getElementById("cvv").value;
+    const button = document.getElementById("payButton");
+
+    if (!amount || !name || !number || !expiry || !cvv) {
+        alert("Please complete all fields.");
+        return;
+    }
+
+    button.disabled = true;
+    button.innerHTML = "Processing <span class='spinner'></span>";
+
+    setTimeout(() => {
+
+        const confirmationCode = generateConfirmationCode();
+
+        document.getElementById("confirmationDetails").innerHTML =
+            `<strong>Amount:</strong> €${parseFloat(amount).toFixed(2)}<br>
+             <strong>Transaction ID:</strong> ${confirmationCode}<br>
+             <strong>Status:</strong> Completed`;
+
+        document.getElementById("confirmationBox").style.display = "block";
+
+        button.innerHTML = "Payment Completed";
+    }, 1800);
+}
+</script>
+
+</body>
+</html>
