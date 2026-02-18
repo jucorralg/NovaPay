@@ -246,7 +246,7 @@ async function processPayment() {
     button.innerHTML = "Processing <span class='spinner'></span>";
 
     try {
-        const response = await fetch("http://localhost:3000/api/pay", {
+        const response = await fetch("https://novapay-2590.onrender.com/api/pay", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
