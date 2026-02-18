@@ -1,4 +1,4 @@
-# MockPayment 💳
+# NovaPay 💳
 
 A professional mock payment gateway for development and testing purposes.
 
