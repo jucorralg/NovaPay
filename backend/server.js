@@ -24,6 +24,19 @@ const FRONTEND_URL =
 const sessions = {}; // In-memory session storage
 
 // ============================
+// Add REDIS
+// ============================
+const { createClient } = require('redis');
+
+const redisClient = createClient({
+  url: process.env.REDIS_URL
+});
+
+redisClient.connect()
+  .then(() => console.log("Redis connected"))
+  .catch(console.error);
+
+// ============================
 // Serve frontend (solo local)
 // ============================
 app.use(express.static(path.join(__dirname, 'frontend')));
@@ -75,12 +88,13 @@ app.post('/api/create-session', (req, res) => {
 
   const sessionId = uuidv4();
 
-  sessions[sessionId] = {
+  await redisClient.set(sessionId,JSON.stringify({
     agentId,
     amount,
     customerEmail,
     status: 'pending',
-  };
+    })
+  );
 
   // 🔥 Ahora usamos FRONTEND_URL (GitHub Pages en producción)
   const paymentUrl =
@@ -95,7 +109,11 @@ app.post('/api/create-session', (req, res) => {
 app.post('/api/pay', (req, res) => {
   const { sessionId, cardNumber, cardName, expiry, cvv } = req.body;
 
-  const session = sessions[sessionId];
+  let session = await redisClient.get(sessionId);
+  if (!session) return res.status(400).json({ message: 'Invalid session' });
+
+  session = JSON.parse(session);
+
   if (!session) return res.status(400).json({ message: 'Invalid session' });
 
   if (!cardNumber || !cardName || !expiry || !cvv) {
@@ -108,6 +126,7 @@ app.post('/api/pay', (req, res) => {
   session.status = 'completed';
   session.last4 = last4;
   session.confirmationCode = confirmationCode;
+  await redisClient.set(sessionId, JSON.stringify(session));
 
   // Notify agent via WebSocket
   const ws = agentSockets[session.agentId];
@@ -132,11 +151,13 @@ app.post('/api/pay', (req, res) => {
 // ============================
 // Session status (polling)
 // ============================
-app.get('/api/session-status', (req, res) => {
+app.get('/api/session-status', async (req, res) => {
   const { sessionId } = req.query;
-  const session = sessions[sessionId];
+  let session = await redisClient.get(sessionId);
   if (!session) return res.status(400).json({ message: 'Invalid session' });
-  res.json(session);
+
+  res.json(JSON.parse(session));
+
 });
 
 // ============================
