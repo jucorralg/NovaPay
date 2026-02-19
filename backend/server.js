@@ -53,7 +53,13 @@ const server = http.createServer(app);
 // ============================
 // WebSocket server (MISMO PUERTO)
 // ============================
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ noServer: true });
+server.on('upgrade', (request, socket, head) => {
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    wss.emit('connection', ws, request);
+  });
+});
+
 const agentSockets = {};
 
 wss.on('connection', (ws) => {
